@@ -7,3 +7,4 @@ COLS = ["ID", "Date", "Lat", "Lon",
         "Irradiance", "Temp", 
         "Module", "Capacity", "Angle", "Irradiance_m", 
         "Temp_m", "Generation"]
+TARGET = "Generation"
