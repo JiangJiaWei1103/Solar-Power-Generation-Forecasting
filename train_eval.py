@@ -53,8 +53,9 @@ def main(args: Namespace) -> None:
 
         # Dump cv results
         exp.dump_ndarr("oof", cv_result.oof_pred)
-        for fold, holdout in enumerate(cv_result.holdout_pred):
-            exp.dump_ndarr(f"holdout_fold{fold}", holdout)
+        if cv_result.holdout_pred is not None:
+            for fold, holdout in enumerate(cv_result.holdout_pred):
+                exp.dump_ndarr(f"holdout_fold{fold}", holdout)
 
         for fold, model in enumerate(models):
             exp.dump_model(model, fold)

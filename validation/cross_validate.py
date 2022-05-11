@@ -52,48 +52,18 @@ def cross_validate(
         cv_output: output of cross validatin process
     """
 
-    def _predict(model: BaseEstimator, x: pd.DataFrame) -> np.ndarray:
-        """Do inference with the well-trained estimator.
+    oof: np.ndarray = None
+    oof_scores: List[float] = []
+    holdout: Optional[np.ndarray] = None
+    holdout_scores: Optional[List[float]] = None
+    imp: List[pd.DataFrame] = []
 
-        Parameters:
-            model: well-trained estimator used to do inference
-            x: data to predict on
+    def _cross_validate_inner() -> None:
+        """Run inner-fold cross validation.
 
         Return:
-            y_pred: predicting results
+            None
         """
-        y_pred = model.predict(x)
-
-        return y_pred
-
-    # Configure metadata
-    project = exp.args.project_name
-    exp_id = exp.exp_id
-
-    # Process X and y sets
-    X, y = dp.get_X_y()
-    X = convert_input(X)
-    y = convert_input_vector(y, index=X.index)
-
-    # Start cv process
-    for ofold in range(dp.holdout_splitter.get_n_splits()):
-        test_idx = dp.holdout_splitter.get_holdout(ofold)
-        train_idx = ~X.index.isin(test_idx)
-
-        X_train = X.iloc[train_idx].reset_index(drop=True)
-        y_train = y.iloc[train_idx].reset_index(drop=True)
-        X_test = X.iloc[test_idx]
-        y_test = y.iloc[test_idx]
-
-        oof = np.zeros(len(X_train))
-        evaluated = np.full(len(X_train), False)
-        oof_scores = []
-        holdout = None
-        if X_test is not None:
-            holdout = np.zeros((cv.get_n_splits(), len(X_test)))
-            holdout_scores = []
-        imp = []
-
         for ifold, (tr_idx, val_idx) in enumerate(
             cv.split(
                 X_train,
@@ -135,9 +105,72 @@ def cross_validate(
 
             exp_fold.finish()
 
+    def _predict(model: BaseEstimator, x: pd.DataFrame) -> np.ndarray:
+        """Do inference with the well-trained estimator.
+
+        Parameters:
+            model: well-trained estimator used to do inference
+            x: data to predict on
+
+        Return:
+            y_pred: predicting results
+        """
+        y_pred = model.predict(x)
+
+        return y_pred
+
+    # Configure metadata
+    project = exp.args.project_name
+    exp_id = exp.exp_id
+
+    # Process X and y sets
+    X, y = dp.get_X_y()
+    X = convert_input(X)
+    y = convert_input_vector(y, index=X.index)
+
+    # Start cv process
+    if _do_holdout(dp):
+        for ofold in range(dp.holdout_splitter.get_n_splits()):
+            test_idx = dp.holdout_splitter.get_holdout(ofold)
+            train_idx = ~X.index.isin(test_idx)
+
+            X_train = X.iloc[train_idx].reset_index(drop=True)
+            y_train = y.iloc[train_idx].reset_index(drop=True)
+            X_test = X.iloc[test_idx]
+            y_test = y.iloc[test_idx]
+
+            oof = np.zeros(len(X_train))
+            evaluated = np.full(len(X_train), False)
+            if X_test is not None:
+                holdout = np.zeros((cv.get_n_splits(), len(X_test)))
+                holdout_scores = []
+            _cross_validate_inner()
+    else:
+        X_train, y_train = X, y
+
+        oof = np.zeros(len(X_train))
+        evaluated = np.full(len(X_train), False)
+        _cross_validate_inner()
+
     cv_result = CVResult(oof, holdout, oof_scores, holdout_scores, imp)
 
     return cv_result
+
+
+def _do_holdout(dp: DataProcessor) -> bool:
+    """Check if local holdout is done in the experiment.
+
+    Parameters:
+        dp: data processor
+
+    Return:
+        holdout: whether local holdout is done
+    """
+    holdout = False
+    if dp.holdout_cfg["n_splits"] != 0:
+        holdout = True
+
+    return holdout
 
 
 def _get_feat_imp(
