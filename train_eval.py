@@ -33,6 +33,7 @@ def main(args: Namespace) -> None:
 
     with experiment as exp:
         # Clean and process data to feed
+        exp.dump_cfg(exp.dp_cfg, "dp")
         dp = DataProcessor(args.input_path, **exp.dp_cfg)
         dp.run_before_cv()
 
@@ -40,6 +41,7 @@ def main(args: Namespace) -> None:
         cv = build_cv(args)
 
         # Build models
+        exp.dump_cfg(exp.model_cfg, args.model_name)
         models = build_models(cv, args.model_name, exp.model_params)
 
         # Start cv process

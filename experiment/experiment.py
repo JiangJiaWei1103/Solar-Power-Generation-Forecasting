@@ -16,6 +16,7 @@ from typing import Any, Dict, Optional, Type
 
 import numpy as np
 import pandas as pd
+import yaml
 from sklearn.base import BaseEstimator
 
 import wandb
@@ -55,6 +56,20 @@ class Experiment(object):
         traceback: Optional[TracebackType],
     ) -> None:
         self._halt()
+
+    def dump_cfg(self, cfg: Dict[str, Any], file_name: str) -> None:
+        """Dump config dictionary to corresponding path.
+
+        Parameters:
+            cfg: configuration
+            file_name: name of the file with .yaml extension
+
+        Return:
+            None
+        """
+        dump_path = os.path.join(DUMP_PATH, "config", f"{file_name}.yaml")
+        with open(dump_path, "w") as f:
+            yaml.dump(cfg, f)
 
     def dump_ndarr(self, file_name: str, arr: np.ndarray) -> None:
         """Dump np.ndarray under corresponding path.
@@ -121,6 +136,7 @@ class Experiment(object):
         if os.path.exists(DUMP_PATH):
             rmtree(DUMP_PATH)
         os.mkdir(DUMP_PATH)
+        os.mkdir(os.path.join(DUMP_PATH, "config"))
         os.mkdir(os.path.join(DUMP_PATH, "models"))
         os.mkdir(os.path.join(DUMP_PATH, "trafos"))
         os.mkdir(os.path.join(DUMP_PATH, "preds"))
