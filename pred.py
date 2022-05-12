@@ -64,6 +64,13 @@ def _parseargs() -> Namespace:
         default=None,
         help="version of the model used to predict",
     )
+    argparser.add_argument(
+        "--model-folds",
+        type=int,
+        default=None,
+        nargs="*",
+        help="fold numbers of models used to predict",
+    )
 
     args = argparser.parse_args()
     return args
@@ -119,6 +126,7 @@ def main(args: Namespace) -> None:
     # Configure experiment
     exp = wandb.init(
         project=args.project_name,
+        config={"common": vars(args)},
         group=args.exp_id,
         job_type="infer",
     )
@@ -137,9 +145,13 @@ def main(args: Namespace) -> None:
     dp.run_before_cv()
 
     # Load well-trained models
-    models = []
+    model_folds = args.model_folds
     model_path = os.path.join(artif_path, "models")
-    for model_file in sorted(os.listdir(model_path)):
+
+    models = []
+    for fold, model_file in enumerate(sorted(os.listdir(model_path))):
+        if fold not in model_folds:
+            continue
         with open(os.path.join(model_path, model_file), "rb") as f:
             models.append(pickle.load(f))
 
