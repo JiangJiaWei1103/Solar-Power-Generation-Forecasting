@@ -61,10 +61,22 @@ class DefaultArgParser:
             "--oof-size",
             type=int,
             default=None,
-            help="numeber of time_ids in oof",
+            help="numeber of dates in oof",
+        )
+        self.argparser.add_argument(
+            "--max-train-size",
+            type=int,
+            default=None,
+            help="max numeber of dates in training set",
         )
         self.argparser.add_argument(
             "--group", type=str, default=None, help="column to group CV folds"
+        )
+        self.argparser.add_argument(
+            "--stratified",
+            type=str,
+            default=None,
+            help="column acting as stratified determinant",
         )
         self.argparser.add_argument(
             "--train-ratio",

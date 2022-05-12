@@ -14,8 +14,7 @@ from sklearn.model_selection import (
     StratifiedKFold,
 )
 
-from .ts import GroupTimeSeriesSplit as GPTSSplit
-from .ts import TSSplit
+from .ts import GPTSSplit
 
 
 def build_cv(args: Namespace) -> BaseCrossValidator:
@@ -31,19 +30,22 @@ def build_cv(args: Namespace) -> BaseCrossValidator:
     train_ratio = args.train_ratio
     val_ratio = args.val_ratio
     n_folds = args.n_folds
-    oof_size = args.oof_size
+    n_time_step_oof = args.oof_size
+    max_train_n_time_step = args.max_train_size
     group = args.group
     random_state = args.random_state
 
     if cv_scheme == "kfold":
         cv = KFold(n_splits=n_folds, shuffle=True, random_state=random_state)
-    elif cv_scheme == "tssplit":
-        cv = TSSplit(train_ratio, val_ratio)
     elif cv_scheme == "gp":
         cv = GroupKFold(n_splits=n_folds)
     elif cv_scheme == "stratified":
-        cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=42)
+        cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=random_state)
     elif cv_scheme == "gpts":
-        cv = GPTSSplit(n_folds=n_folds, oof_size=oof_size, groups=None)
+        cv = GPTSSplit(
+            n_splits=n_folds,
+            n_time_step_oof=n_time_step_oof,
+            max_train_n_time_step=max_train_n_time_step,
+        )
 
     return cv

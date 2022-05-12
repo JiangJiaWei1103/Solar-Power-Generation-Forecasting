@@ -6,7 +6,7 @@ This file contains the core logic of running cross validation.
 """
 import copy
 from collections import namedtuple
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -18,6 +18,7 @@ from sklearn.model_selection import BaseCrossValidator
 import wandb
 from data.data_processor import DataProcessor
 from experiment.experiment import Experiment
+from metadata import TARGET
 
 CVResult = namedtuple(
     "CVResult", ["oof_pred", "holdout_pred", "oof_scores", "holdout_scores", "imp"]
@@ -32,6 +33,8 @@ def cross_validate(
     fit_params: Dict[str, Any],
     eval_fn: Optional[Callable] = None,
     imp_type: str = "gain",
+    stratified: Optional[str] = None,
+    group: Optional[str] = None,
 ) -> CVResult:
     """Run cross validation and return evaluated performance and
     predicting results.
@@ -47,6 +50,9 @@ def cross_validate(
         fit_params: parameters passed to `fit()` of the estimator
         eval_fn: evaluation function used to derive performance score
         imp_type: how the feature importance is calculated
+        stratified: column acting as stratified determinant, used to
+            preserve the percentage of samples for each class
+        group: column name of group labels
 
     Return:
         cv_output: output of cross validatin process
@@ -64,12 +70,7 @@ def cross_validate(
         Return:
             None
         """
-        for ifold, (tr_idx, val_idx) in enumerate(
-            cv.split(
-                X_train,
-                y_train,
-            )
-        ):
+        for ifold, (tr_idx, val_idx) in enumerate(cv.split(X_train, y_, groups)):
             # Configure cv fold-level experiment entry
             exp_fold = wandb.init(
                 project=project,
@@ -139,6 +140,7 @@ def cross_validate(
             X_test = X.iloc[test_idx]
             y_test = y.iloc[test_idx]
 
+            y_, groups = _get_cv_aux(dp, stratified, group)
             oof = np.zeros(len(X_train))
             evaluated = np.full(len(X_train), False)
             if X_test is not None:
@@ -148,6 +150,7 @@ def cross_validate(
     else:
         X_train, y_train = X, y
 
+        y_, groups = _get_cv_aux(dp, stratified, group)
         oof = np.zeros(len(X_train))
         evaluated = np.full(len(X_train), False)
         _cross_validate_inner()
@@ -155,6 +158,41 @@ def cross_validate(
     cv_result = CVResult(oof, holdout, oof_scores, holdout_scores, imp)
 
     return cv_result
+
+
+def _get_cv_aux(
+    dp: DataProcessor,
+    #     X_train: Union[pd.DataFrame, np.ndarray],
+    #     y_train: Union[pd.Series, np.ndarray],
+    stratified: Optional[str] = None,
+    group: Optional[str] = None,
+) -> Tuple[Union[pd.Series, np.ndarray], Optional[Union[pd.Series, np.ndarray]]]:
+    """Return auxiliary information for cv (e.g, stratified labels,
+    group labels).
+
+    Parameters:
+        #X_train: training X set
+        #y_train: training y set
+        dp: data processor
+        stratified: column acting as stratified determinant, used to
+            preserve the percentage of samples for each class
+        group: column name of group labels
+
+    Return:
+        y_: stratified labels
+        groups: group labels
+    """
+    df = dp.get_df()
+    if stratified is not None:
+        from sklearn.preprocessing import LabelEncoder
+
+        label_enc = LabelEncoder()
+        y_ = label_enc.fit_transform(df[stratified])
+    else:
+        y_ = df[TARGET]
+    groups = None if group is None else df[group]
+
+    return y_, groups
 
 
 def _do_holdout(dp: DataProcessor) -> bool:

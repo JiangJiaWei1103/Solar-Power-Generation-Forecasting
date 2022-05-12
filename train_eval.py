@@ -51,6 +51,8 @@ def main(args: Namespace) -> None:
             models=models,
             cv=cv,
             fit_params=exp.fit_params,
+            stratified=args.stratified,
+            group=args.group,
         )
 
         # Dump cv results
