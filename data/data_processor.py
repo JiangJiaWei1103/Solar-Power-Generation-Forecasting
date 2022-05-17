@@ -12,7 +12,7 @@ from typing import Any, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from metadata import COLS, TARGET
+from metadata import TARGET
 from validation.holdout import HoldoutSplitter
 
 
@@ -33,7 +33,7 @@ class DataProcessor:
 
     def __init__(self, file_path: str, **dp_cfg: Any):
         #         self._df = pd.read_csv(file_path, parse_dates=["Date"])[COLS]
-        self._df = pd.read_csv(file_path)[COLS]
+        self._df = pd.read_csv(file_path)
         self._dp_cfg = dp_cfg
         self._setup()
 
@@ -89,6 +89,7 @@ class DataProcessor:
 
     def _setup(self) -> None:
         """Retrieve all parameters specified to process data."""
+        self.feats = self._dp_cfg["feats"]
         # Before data splitting
         self.holdout_cfg = self._dp_cfg["holdout"]
 
@@ -96,18 +97,7 @@ class DataProcessor:
 
     def _split_X_y(self) -> None:
         print("Start splitting X and y set...")
-        self._X = self._df[
-            [
-                "Lat",
-                "Lon",
-                "Irradiance",
-                "Temp",
-                "Capacity",
-                "Angle",
-                "Irradiance_m",
-                "Temp_m",
-            ]
-        ]
+        self._X = self._df[self.feats]
         self._y = self._df[TARGET]
         print("Done.")
 
