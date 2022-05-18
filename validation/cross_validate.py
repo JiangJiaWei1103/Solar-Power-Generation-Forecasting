@@ -91,8 +91,9 @@ def cross_validate(
             oof[val_idx] = _predict(models[ifold], X_val)
             evaluated[val_idx] = True
             #             oof_score = eval_fn(y_val, oof[val_idx])
+            tr_score = np.sqrt(mse(y_tr, _predict(models[ifold], X_tr)))
             oof_score = np.sqrt(mse(y_val, oof[val_idx]))
-            exp_fold.log({"oof": {"rmse": oof_score}})
+            exp_fold.log({"train": {"rmse": tr_score}, "oof": {"rmse": oof_score}})
             oof_scores.append(oof_score)
             if holdout is not None:
                 holdout[ifold] = _predict(models[ifold], X_test)
