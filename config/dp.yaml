@@ -6,22 +6,19 @@ holdout:
     t_end: null #["2021-09-28", "2021-10-28"]
     holdout_ratio: null  # 0.2
 feats: [
-    "Lat",
-    "Lon",
-    "Irradiance",
-    "Temp",
-    "Capacity",
-    "Angle",
-    "Irradiance_m",
-    "Temp_m"]
-
-#             ['Irradiance', 'Temp', 'Capacity',
-# 'Angle', 'Irradiance_m', 'Temp_m',
-#  'StnPres', 'StnPresMax', 'StnPresMin',
-#  'Temp_t', 'TempMax','TempMin',
-#  'RH', 'RHMin', 'WS', 'WD', 'WSGust',
-#  'WDGust', 'Precp', 'StnPres_i', 'SeaPres', 'StnPresMax_i', 'StnPresMin_i',
-#        'Temp_i', 'TempMax_i', 'TempMin_i', 'TdDewPoint', 'RH_i', 'RHMin_i',
-#        'WS_i', 'WD_i', 'WSGust_i', 'WDGust_i', 'Precp_i', 'PrecpMax10',
-#        'PrecpMax60', 'SunShine', 'Irradiance_i']
-#         ]
+    'Lat', 'Lon',
+    'Capacity',
+    'Angle', 'Irradiance_m', 'Temp_m',
+    'StnPres', #'StnPresMax', 'StnPresMin',
+    'SeaPres',
+    'Temp', 'TempMax', #'TempMin',
+    'TdDewPoint',
+    'RH', 'RHMin',
+    'WS', 'WD', #'WSGust', 'WDGust',
+    'Precp', #'PrecpMax10', 'PrecpMax60',
+    'Irradiance', 'SunShine',
+]
+scale:
+    type: quantile
+    n_quantiles: 100
+    cols: []

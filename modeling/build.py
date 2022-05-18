@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 
 from lightgbm import LGBMRegressor
 from sklearn.base import BaseEstimator
+from sklearn.linear_model import Ridge
 from sklearn.model_selection import BaseCrossValidator
 
 
@@ -27,6 +28,8 @@ def build_models(
 
     if model_name == "lgbm":
         model = LGBMRegressor
+    elif model_name == "ridge":
+        model = Ridge
 
     models = [model(**model_params) for _ in range(n_folds)]
 

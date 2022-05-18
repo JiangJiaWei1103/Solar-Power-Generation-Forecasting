@@ -1,0 +1,6 @@
+# Ridge model hyperparameters
+model_params:
+    alpha: 20
+    random_state: 168
+
+fit_params: null
