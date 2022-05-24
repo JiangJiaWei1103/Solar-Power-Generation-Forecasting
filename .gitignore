@@ -4,12 +4,18 @@ __pycache__
 wandb/
 *.swp
 .mypy_cache
+artifacts/
 
 # Legacy code
 legacy/
 
-# Raw data
+# Data
 data/raw/*
+data/processed/*
 
 # Local output buffer
 output/
+
+# Submission
+submission.csv
+submissions/
