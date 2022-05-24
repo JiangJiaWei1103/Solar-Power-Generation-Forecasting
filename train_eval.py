@@ -1,5 +1,5 @@
 """
-Main script for training and evaluation processes.
+Main script for training and evaluation processes using traditional ML.
 Author: JiaWei Jiang
 
 This script is used to run training and evaluation processes given the
@@ -11,7 +11,7 @@ from argparse import Namespace
 
 from cv.build import build_cv
 from data.data_processor import DataProcessor
-from engine.defaults import DefaultArgParser
+from engine.defaults import TrainEvalArgParser
 from experiment.experiment import Experiment
 from modeling.build import build_models
 from validation.cross_validate import cross_validate
@@ -70,7 +70,7 @@ def main(args: Namespace) -> None:
 
 if __name__ == "__main__":
     # Parse arguments
-    arg_parser = DefaultArgParser()
+    arg_parser = TrainEvalArgParser()
     args = arg_parser.parse()
 
     # Launch main function

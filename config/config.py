@@ -6,7 +6,6 @@ This file includes utility functions for setting up experiments.
 """
 import os
 import random
-import shutil
 import string
 from typing import Dict, Optional
 
@@ -14,7 +13,7 @@ import numpy as np
 import torch
 import yaml
 
-from paths import CONFIG_PATH, DUMP_PATH
+from paths import CONFIG_PATH
 
 
 def gen_exp_id(model_name: str) -> str:
@@ -64,7 +63,7 @@ def setup_model(model_name: str) -> Dict:
 
 def setup_proc(seed: Optional[int] = None) -> Dict:
     """Return hyperparameters for training and evaluation processes,
-    and clear local output buffer to dump outputs.
+    and seed the experiment.
 
     Parameters:
         seed: random seed for training and evaluation processes
@@ -78,14 +77,6 @@ def setup_proc(seed: Optional[int] = None) -> Dict:
     cfg_path = os.path.join(CONFIG_PATH, "defaults.yaml")
     with open(cfg_path, "r") as f:
         proc_cfg = yaml.full_load(f)
-
-    # Create local directory to dump the final results
-    # =====Need to consider cases for prediction analysis=====
-    if os.path.exists(DUMP_PATH):
-        shutil.rmtree(DUMP_PATH)
-    os.mkdir(DUMP_PATH)
-    os.mkdir(os.path.join(DUMP_PATH, "models"))
-    os.mkdir(os.path.join(DUMP_PATH, "scalers"))
 
     # Seed experiment
     if seed is not None:

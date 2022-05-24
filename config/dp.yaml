@@ -6,19 +6,40 @@ holdout:
     t_end: null #["2021-09-28", "2021-10-28"]
     holdout_ratio: null  # 0.2
 feats: [
-    'Lat', 'Lon',
-    'Capacity',
-    'Angle', 'Irradiance_m', 'Temp_m',
-    'StnPres', #'StnPresMax', 'StnPresMin',
-    'SeaPres',
-    'Temp', 'TempMax', #'TempMin',
-    'TdDewPoint',
-    'RH', 'RHMin',
-    'WS', 'WD', #'WSGust', 'WDGust',
-    'Precp', #'PrecpMax10', 'PrecpMax60',
+    # TID
+    'Date',
+    # Location
+    #'Lat', 'Lon', 'Location',   # Cat.
+    # Generator
+    'Capacity',   # Cat.
+    'Irradiance_m', 'Temp_m',
+    #'Angle', 'Module',   # Cat.
+    # Press
+    'StnPres', 'StnPresMax', 'StnPresMin', 'SeaPres',
+    #'StnPres_i', 'StnPresMax_i', 'StnPresMin_i',
+    # Irradiance
     'Irradiance', 'SunShine',
+    #'Irradiance_gap', 'Irradiance_dev',
+    #'Irradiance_i',
+    # Temperature
+    'Temp', 'TempMax', 'TempMin', 'TdDewPoint',
+    #'Temp_t', 'Temp_i', 'TempMax_i', 'TempMin_i',
+    # Humidity
+    'RH', 'RHMin',
+    #'RH_i', 'RHMin_i',
+    # Wind
+    'WS', 'WD', 'WSGust', 'WDGust',
+    #'WS_i', 'WD_i', 'WSGust_i', 'WDGust_i'
+    # Precipitation
+    'Precp', 'PrecpMax10', 'PrecpMax60',
+    #'Precp_i',
 ]
 scale:
-    type: quantile
-    n_quantiles: 100
+    type: standard #quantile
+    n_quantiles: null #500
     cols: []
+
+# DL-Specific Dataset
+dataset:
+    t_window: 21
+    horizon: 0   # Can use feature on the same day

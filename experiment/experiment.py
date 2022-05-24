@@ -20,7 +20,7 @@ import yaml
 from sklearn.base import BaseEstimator
 
 import wandb
-from config.config import gen_exp_id, setup_dp, setup_model
+from config.config import gen_exp_id, setup_dp, setup_model, setup_proc
 from paths import DUMP_PATH
 
 
@@ -29,17 +29,23 @@ class Experiment(object):
 
     Parameters:
         args: arguments driving training and evaluation processes
+        dl: if the experiment uses DL models, then set to True
     """
 
     cfg: Dict[str, Dict[str, Any]]
     model_params: Dict[str, Any]
     fit_params: Optional[Dict[str, Any]] = {}
 
-    def __init__(self, args: Namespace):
+    def __init__(self, args: Namespace, dl: bool = False):
         self.exp_id = gen_exp_id(args.model_name)
         self.args = args
         self.dp_cfg = setup_dp()
         self.model_cfg = setup_model(args.model_name)
+        self.dl = dl
+        if dl:
+            self.proc_cfg = setup_proc()
+
+        # Post process, parse and aggregate configuration
         self._parse_model_cfg()
         self._agg_cfg()
 
@@ -116,9 +122,12 @@ class Experiment(object):
         """Configure model parameters and parameters passed to fit
         method if they're provided.
         """
-        self.model_params = self.model_cfg["model_params"]
-        if self.model_cfg["fit_params"] is not None:
-            self.fit_params = self.model_cfg["fit_params"]
+        if self.dl:
+            self.model_params = self.model_cfg
+        else:
+            self.model_params = self.model_cfg["model_params"]
+            if self.model_cfg["fit_params"] is not None:
+                self.fit_params = self.model_cfg["fit_params"]
 
     def _agg_cfg(self) -> None:
         """Aggregate sub configurations of different components into
@@ -130,6 +139,8 @@ class Experiment(object):
             "model": self.model_params,
             "fit": self.fit_params,
         }
+        if self.dl:
+            self.cfg["proc"] = self.proc_cfg
 
     def _mkbuf(self) -> None:
         """Make local buffer for experiment output dumping."""
