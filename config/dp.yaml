@@ -1,7 +1,24 @@
 holdout:
-    n_splits: 1
-    chrono: False
+    n_splits: 0
+    chrono: null #False
     ts_col: null #Date
     t_start: null #["2021-08-28", "2021-09-28"]
     t_end: null #["2021-09-28", "2021-10-28"]
-    holdout_ratio: 0.2  #null
+    holdout_ratio: null  # 0.2
+feats: [
+    'Lat', 'Lon',
+    'Capacity',
+    'Angle', 'Irradiance_m', 'Temp_m',
+    'StnPres', #'StnPresMax', 'StnPresMin',
+    'SeaPres',
+    'Temp', 'TempMax', #'TempMin',
+    'TdDewPoint',
+    'RH', 'RHMin',
+    'WS', 'WD', #'WSGust', 'WDGust',
+    'Precp', #'PrecpMax10', 'PrecpMax60',
+    'Irradiance', 'SunShine',
+]
+scale:
+    type: quantile
+    n_quantiles: 100
+    cols: []

@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from category_encoders.utils import convert_input, convert_input_vector
+from lightgbm import LGBMRegressor
 from sklearn.base import BaseEstimator
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.model_selection import BaseCrossValidator
@@ -81,9 +82,11 @@ def cross_validate(
 
             X_tr, y_tr = X_train.iloc[tr_idx], y_train.iloc[tr_idx]
             X_val, y_val = X_train.iloc[val_idx], y_train.iloc[val_idx]
+            X_tr, X_val, scl = dp.run_after_splitting(X_tr, X_val, ifold)
 
             fit_params_ifold = copy.copy(fit_params)
-            fit_params_ifold["eval_set"] = [(X_tr, y_tr), (X_val, y_val)]
+            if isinstance(models[0], LGBMRegressor):
+                fit_params_ifold["eval_set"] = [(X_tr, y_tr), (X_val, y_val)]
 
             models[ifold].fit(X_tr, y_tr, **fit_params_ifold)
 
@@ -91,8 +94,9 @@ def cross_validate(
             oof[val_idx] = _predict(models[ifold], X_val)
             evaluated[val_idx] = True
             #             oof_score = eval_fn(y_val, oof[val_idx])
+            tr_score = np.sqrt(mse(y_tr, _predict(models[ifold], X_tr)))
             oof_score = np.sqrt(mse(y_val, oof[val_idx]))
-            exp_fold.log({"oof": {"rmse": oof_score}})
+            exp_fold.log({"train": {"rmse": tr_score}, "oof": {"rmse": oof_score}})
             oof_scores.append(oof_score)
             if holdout is not None:
                 holdout[ifold] = _predict(models[ifold], X_test)
@@ -102,7 +106,12 @@ def cross_validate(
                 holdout_scores.append(holdout_score)
 
             # Record feature importance
-            imp.append(_get_feat_imp(models[ifold], X_tr.columns, imp_type))
+            if isinstance(models[0], LGBMRegressor):
+                if isinstance(X_tr, pd.DataFrame):
+                    feats = X_tr.columns
+                else:
+                    feats = [str(i) for i in range(X_tr.shape[1])]
+                imp.append(_get_feat_imp(models[ifold], feats, imp_type))
 
             exp_fold.finish()
 

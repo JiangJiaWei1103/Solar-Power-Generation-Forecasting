@@ -3,33 +3,69 @@ Boilerplate logic for controlling training and evaluation processes.
 Author: JiaWei Jiang
 """
 import argparse
+from abc import abstractmethod
 from argparse import Namespace
 from typing import Optional
 
-__all__ = [
-    "DefaultArgParser",
-]
+__all__ = ["TrainEvalArgParser", "InferArgParser"]
 
 
-class DefaultArgParser:
-    """Default argument parser."""
+class BaseArgParser:
+    """Base class for all customized argument parsers.
+
+    Todo - Move to base directory.
+    """
 
     def __init__(self) -> None:
+        self.argparser = argparse.ArgumentParser()
         self._build()
 
     def parse(self) -> Namespace:
-        """Return arguments driving complete training and evaluation
-        processes.
+        """Return arguments driving the designated processes.
 
         Return:
-            args: arguments driving training and evaluation processes
+            args: arguments driving the designated processes
         """
         args = self.argparser.parse_args()
         return args
 
+    @abstractmethod
     def _build(self) -> None:
         """Build argument parser."""
-        self.argparser = argparse.ArgumentParser()
+        raise NotImplementedError
+
+    def _str2bool(self, arg: str) -> Optional[bool]:
+        """Convert boolean argument from string representation into
+        bool.
+
+        Parameters:
+            arg: str, argument in string representation
+
+        Return:
+            True or False: bool, argument in bool dtype
+        """
+        # See https://stackoverflow.com/questions/15008758/
+        # parsing-boolean-values-with-argparse
+        if isinstance(arg, bool):
+            return arg
+        if arg.lower() in ("true", "t", "yes", "y", "1"):
+            return True
+        elif arg.lower() in ("false", "f", "no", "n", "0"):
+            return False
+        else:
+            raise argparse.ArgumentTypeError(
+                "Expect boolean representation " "for argument --eval-only."
+            )
+
+
+class TrainEvalArgParser(BaseArgParser):
+    """Argument parser for training and evaluation processes."""
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def _build(self) -> None:
+        """Build argument parser."""
         self.argparser.add_argument(
             "--project-name",
             type=str,
@@ -97,31 +133,55 @@ class DefaultArgParser:
             help="random state seeding shuffling process of cross validator",
         )
 
-    #         self.argparser.add_argument('--eval-only', type=self._str2bool,
-    #                                     nargs='?', const=True, default=False,
-    #                                     help="evaluation with pre-dumped models")
-    #         self.argparser.add_argument('--resume', action='store_true',
-    #                                     help="whether to resume training ckpt")
 
-    def _str2bool(self, arg: str) -> Optional[bool]:
-        """Convert boolean argument from string representation into
-        bool.
+class InferArgParser(BaseArgParser):
+    """Argument parser for inference process."""
 
-        Parameters:
-            arg: str, argument in string representation
+    def __init__(self) -> None:
+        super().__init__()
 
-        Return:
-            True or False: bool, argument in bool dtype
-        """
-        # See https://stackoverflow.com/questions/15008758/
-        # parsing-boolean-values-with-argparse
-        if isinstance(arg, bool):
-            return arg
-        if arg.lower() in ("true", "t", "yes", "y", "1"):
-            return True
-        elif arg.lower() in ("false", "f", "no", "n", "0"):
-            return False
-        else:
-            raise argparse.ArgumentTypeError(
-                "Expect boolean representation " "for argument --eval-only."
-            )
+    def _build(self) -> None:
+        """Build argument parser."""
+        self.argparser.add_argument(
+            "--project-name",
+            type=str,
+            default=None,
+            help="name of the project configuring wandb project",
+        )
+        self.argparser.add_argument(
+            "--exp-id",
+            type=str,
+            default=None,
+            help="experiment identifier used to group experiment entries",
+        )
+        self.argparser.add_argument(
+            "--input-path",
+            type=str,
+            default=None,
+            help="path of the input file",
+        )
+        self.argparser.add_argument(
+            "--model-name",
+            type=str,
+            default=None,
+            help="name of the model architecture",
+        )
+        self.argparser.add_argument(
+            "--model-version",
+            type=str,
+            default=None,
+            help="version of the model used to predict",
+        )
+        self.argparser.add_argument(
+            "--model-folds",
+            type=int,
+            default=None,
+            nargs="*",
+            help="fold numbers of models used to predict",
+        )
+        self.argparser.add_argument(
+            "--device",
+            type=str,
+            default="cuda:0",
+            help="device used to run the designated processes",
+        )
