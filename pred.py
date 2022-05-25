@@ -6,7 +6,6 @@ This script is used to run inference process on testing set. The
 well-trained models are pulled down from Wandb to do the prediction,
 and final submission file is generated.
 """
-import argparse
 import os
 import pickle
 import warnings
@@ -20,60 +19,9 @@ from sklearn.base import BaseEstimator
 
 import wandb
 from data.data_processor import DataProcessor
+from engine.defaults import InferArgParser
 
 warnings.simplefilter("ignore")
-
-
-def _parseargs() -> Namespace:
-    """Parse and return the specified command line arguments.
-
-    Parameters:
-        None
-
-    Return:
-        args: arguments driving inference process
-    """
-    argparser = argparse.ArgumentParser()
-    argparser.add_argument(
-        "--project-name",
-        type=str,
-        default=None,
-        help="name of the project configuring wandb project",
-    )
-    argparser.add_argument(
-        "--exp-id",
-        type=str,
-        default=None,
-        help="experiment identifier used to group experiment entries",
-    )
-    argparser.add_argument(
-        "--input-path",
-        type=str,
-        default=None,
-        help="path of the input file",
-    )
-    argparser.add_argument(
-        "--model-name",
-        type=str,
-        default=None,
-        help="name of the model architecture",
-    )
-    argparser.add_argument(
-        "--model-version",
-        type=str,
-        default=None,
-        help="version of the model used to predict",
-    )
-    argparser.add_argument(
-        "--model-folds",
-        type=int,
-        default=None,
-        nargs="*",
-        help="fold numbers of models used to predict",
-    )
-
-    args = argparser.parse_args()
-    return args
 
 
 def _predict(dp: DataProcessor, models: List[BaseEstimator]) -> np.ndarray:
@@ -170,8 +118,8 @@ def main(args: Namespace) -> None:
 
 if __name__ == "__main__":
     # Parse arguments
-    #     arg_parser = ()
-    args = _parseargs()  # arg_parser.parse()
+    arg_parser = InferArgParser()
+    args = arg_parser.parse()
 
     # Launch main function
     main(args)
