@@ -51,7 +51,9 @@ def _get_test_data(
     X_test = convert_input(X_test)
 
     if dp_cfg["scale"]["type"] is not None:
-        scl_path = os.path.join(artif_path, "trafos/fold2.pkl")
+        scl_path = os.path.join(
+            artif_path, "trafos/fold0.pkl"
+        )  # Scl from the last fold
         with open(scl_path, "rb") as f:
             scl = pickle.load(f)
         X_test[scl.feature_names_in_] = scl.transform(X_test[scl.feature_names_in_])
@@ -92,6 +94,7 @@ def _get_models(
     return models
 
 
+@torch.no_grad()
 def _predict(
     test_loader: DataLoader, models: List[nn.Module], device: torch.device
 ) -> np.ndarray:
@@ -111,11 +114,17 @@ def _predict(
     for i, batch_data in enumerate(test_loader):
         # Retrieve batched raw data
         x = batch_data["X"].to(device)
+        if batch_data.get("cap") is not None:
+            cap = batch_data["cap"].to(device)
+        else:
+            cap = None
 
         batch_y_pred = np.zeros(x.size(0))
         for model in models:
+            model.eval()
+
             # Forward pass
-            output = model(x)
+            output = model(x, cap)
             batch_y_pred += output.detach().cpu().numpy() / n_models
 
         # Record batched output

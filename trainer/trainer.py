@@ -78,9 +78,13 @@ class MainTrainer(BaseTrainer):
             # Retrieve batched raw data
             x = batch_data["X"].to(self.device)
             y = batch_data["y"].to(self.device)
+            if batch_data.get("cap") is not None:
+                cap = batch_data["cap"].to(self.device)
+            else:
+                cap = None
 
             # Forward pass and derive loss
-            output = self.model(x)
+            output = self.model(x, cap)
             loss = self.loss_fn(output, y)
 
             # Backpropagation
@@ -120,9 +124,13 @@ class MainTrainer(BaseTrainer):
             # Retrieve batched raw data
             x = batch_data["X"].to(self.device)
             y = batch_data["y"].to(self.device)
+            if batch_data.get("cap") is not None:
+                cap = batch_data["cap"].to(self.device)
+            else:
+                cap = None
 
             # Forward pass
-            output = self.model(x)
+            output = self.model(x, cap)
 
             # Derive loss
             loss = self.loss_fn(output, y)
