@@ -1,0 +1,52 @@
+# Configuration for data processor
+# =Features=
+feats: [
+    # =TID=
+    'Date',
+    # =Location=
+    'Lat',
+    # =Generator=
+    'Capacity',
+    'Irradiance_m', 'Temp_m',
+    'Angle',
+    # =Press=
+    'StnPres', 'StnPresMax', 'StnPresMin', 'SeaPres',
+    'StnPres_i', 'StnPresMax_i', 'StnPresMin_i',
+    # =Irradiance=
+    'Irradiance', 'SunShine',
+    'Irradiance_i',
+    # =Temperature=
+    'Temp', 'TempMax', 'TempMin', 'TdDewPoint',
+    'Temp_t', 'Temp_i', 'TempMax_i', 'TempMin_i',
+    # =Humidity=
+    'RH', 'RHMin',
+    'RH_i', 'RHMin_i',
+    # =Wind=
+    'WS', 'WSGust', 'WD', 'WDGust',
+    'WS_i', 'WD_i', 'WSGust_i', 'WDGust_i',
+    # =Precipitation (All with 75%~80% up zero values in train/test.)=
+    'Precp', 'PrecpMax10', 'PrecpMax60',
+    'Precp_i',
+]
+# =Drop outliers=
+drop_outliers: True
+# =Holdout=
+holdout:
+    n_splits: 0
+    chrono: null #False
+    ts_col: null #Date
+    t_start: null #["2021-08-28", "2021-09-28"]
+    t_end: null #["2021-09-28", "2021-10-28"]
+    holdout_ratio: null  # 0.2
+
+# =Scaling=
+scale:
+    type: null
+    n_quantiles: null
+    cols: []
+
+# =DL Dataset=
+dataset: null
+    # t_window: 28
+    # horizon: 0   # Use features on the same day
+    # use_capacity: False

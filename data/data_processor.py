@@ -36,7 +36,6 @@ class DataProcessor:
     _y: Union[pd.DataFrame, np.ndarray]
 
     def __init__(self, file_path: str, **dp_cfg: Any):
-        #         self._df = pd.read_csv(file_path, parse_dates=["Date"])
         self._df = pd.read_csv(file_path)
         self._dp_cfg = dp_cfg
         self._setup()
@@ -52,6 +51,10 @@ class DataProcessor:
         """
         print("Run data cleaning and processing before data splitting...")
         self._df = self._df.sort_values("Date").reset_index(drop=True)
+        #         self._convert_irra_m()   # Deprecated (raw data has been converted)
+        self._drop_outliers()
+
+        # Split datasets and holdout
         self._split_X_y()
         self._holdout()
 
@@ -101,14 +104,29 @@ class DataProcessor:
         self.feats = self._dp_cfg["feats"]
 
         # Before data splitting
+        self.drop_outliers = self._dp_cfg["drop_outliers"]
         self.holdout_cfg = self._dp_cfg["holdout"]
 
         # After data splitting
         self.scale_cfg = self._dp_cfg["scale"]
 
+    def _convert_irra_m(self) -> None:
+        """Convert the unit of `Irradiance_m` from Wh/m2 to MJ/m2."""
+        print("Convert unit of `Irradiance_m`...")
+        self._df["Irradiance_m"] = self._df["Irradiance_m"] / 1000 * 3.6
+
+    def _drop_outliers(self) -> None:
+        """Drop explicit outliers."""
+        outlier_idx = self._df[self._df[TARGET] == 6752].index
+
+        print(f"Start dropping {len(outlier_idx)} outliers...")
+        self._df = self._df.drop(outlier_idx, axis=0).reset_index(drop=True)
+
     def _split_X_y(self) -> None:
+        """Split data into X and y sets."""
         print("Start splitting X and y set...")
-        self._X = self._df[self.feats]
+        #         self._X = self._df[self.feats]   # DL workaround (Date for Dataset)
+        self._X = self._df[[f for f in self.feats if f != "Date"]]
         self._y = self._df[TARGET]
         print("Done.")
 
