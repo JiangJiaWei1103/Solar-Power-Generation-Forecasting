@@ -19,6 +19,8 @@ from metadata import TARGET
 from paths import DUMP_PATH
 from validation.holdout import HoldoutSplitter
 
+from .fe import FE
+
 
 class DataProcessor:
     """Data processor processing raw data, and providing access to
@@ -31,6 +33,7 @@ class DataProcessor:
        dp_cfg: hyperparameters of data processor
     """
 
+    fe: FE
     holdout_splitter: Optional[HoldoutSplitter] = None
     _X: Union[pd.DataFrame, np.ndarray]
     _y: Union[pd.DataFrame, np.ndarray]
@@ -53,6 +56,7 @@ class DataProcessor:
         self._df = self._df.sort_values("Date").reset_index(drop=True)
         #         self._convert_irra_m()   # Deprecated (raw data has been converted)
         self._drop_outliers()
+        self._run_fe()
 
         # Split datasets and holdout
         self._split_X_y()
@@ -99,9 +103,14 @@ class DataProcessor:
         """Return X set and y set."""
         return self._X, self._y
 
+    def get_cat_feats(self) -> List[str]:
+        """Return list of categorical features."""
+        return self.fe.get_cat_feats()
+
     def _setup(self) -> None:
         """Retrieve all parameters specified to process data."""
         self.feats = self._dp_cfg["feats"]
+        self.fe_cfg = self._dp_cfg["fe"]
 
         # Before data splitting
         self.drop_outliers = self._dp_cfg["drop_outliers"]
@@ -118,15 +127,24 @@ class DataProcessor:
     def _drop_outliers(self) -> None:
         """Drop explicit outliers."""
         outlier_idx = self._df[self._df[TARGET] == 6752].index
-
+        # outlier_idx2 = self._df[self._df[TARGET] == 3765].index # 492.8S 2021/1/27
         print(f"Start dropping {len(outlier_idx)} outliers...")
         self._df = self._df.drop(outlier_idx, axis=0).reset_index(drop=True)
+
+    def _run_fe(self) -> None:
+        """Setup feature engineer, and run feature engineering."""
+        self.fe = FE(**self.fe_cfg)
+
+        print("Start feature engineering...")
+        self._df = self.fe.run(self._df)
+        print("Done.")
 
     def _split_X_y(self) -> None:
         """Split data into X and y sets."""
         print("Start splitting X and y set...")
         #         self._X = self._df[self.feats]   # DL workaround (Date for Dataset)
-        self._X = self._df[[f for f in self.feats if f != "Date"]]
+        feats = self.feats + self.fe.get_eng_feats()
+        self._X = self._df[[f for f in feats if f != "Date"]]
         self._y = self._df[TARGET]
         print("Done.")
 

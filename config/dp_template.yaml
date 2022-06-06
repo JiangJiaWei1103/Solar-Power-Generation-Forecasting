@@ -13,7 +13,8 @@ feats: [
     'StnPres', 'StnPresMax', 'StnPresMin', 'SeaPres',
     'StnPres_i', 'StnPresMax_i', 'StnPresMin_i',
     # =Irradiance=
-    'Irradiance', 'SunShine',
+    'Irradiance', 'SunShine', 'SunLightHr', 'SunRise',
+    'SunSet', 'ZenithAngle', 'AirMassNoon',
     'Irradiance_i',
     # =Temperature=
     'Temp', 'TempMax', 'TempMin', 'TdDewPoint',
@@ -28,8 +29,16 @@ feats: [
     'Precp', 'PrecpMax10', 'PrecpMax60',
     'Precp_i',
 ]
+
+# =Feature engineering=
+fe:
+    add_month: False
+    label_enc: []
+    mine_temp: False
+
 # =Drop outliers=
 drop_outliers: True
+
 # =Holdout=
 holdout:
     n_splits: 0

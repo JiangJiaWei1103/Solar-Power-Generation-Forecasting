@@ -90,9 +90,7 @@ def cross_validate(
                 fit_params_ifold["eval_set"] = [(X_tr, y_tr), (X_val, y_val)]
 
                 if not is_gbdt_instance(models[0], "xgb"):
-                    fit_params_ifold[
-                        "categorical_feature"
-                    ] = dp.get_cat_feats()  # type: ignore
+                    fit_params_ifold["categorical_feature"] = dp.get_cat_feats()
 
             models[ifold].fit(X_tr, y_tr, **fit_params_ifold)
 
