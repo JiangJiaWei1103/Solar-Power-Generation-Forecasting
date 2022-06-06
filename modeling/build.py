@@ -11,6 +11,7 @@ from lightgbm import LGBMRegressor
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import BaseCrossValidator
+from xgboost import XGBRegressor
 
 
 def build_models(
@@ -30,6 +31,9 @@ def build_models(
         model = LGBMRegressor
     elif model_name == "ridge":
         model = Ridge
+    elif model_name == "xgb":
+        # See nyaggle to adjust some dumping and parameter cfg
+        model = XGBRegressor
 
     models = [model(**model_params) for _ in range(n_folds)]
 
