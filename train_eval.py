@@ -42,7 +42,7 @@ def main(args: Namespace) -> None:
 
         # Build models
         exp.dump_cfg(exp.model_cfg, args.model_name)
-        models = build_models(cv, args.model_name, exp.model_params)
+        models = build_models(args.model_name, exp.model_params, cv.get_n_splits())
 
         # Start cv process
         cv_result = cross_validate(
@@ -62,7 +62,7 @@ def main(args: Namespace) -> None:
                 exp.dump_ndarr(f"holdout_fold{fold}", holdout)
 
         for fold, model in enumerate(models):
-            exp.dump_model(model, fold)
+            exp.dump_model(model, model_type="fold", mid=fold)
 
         for fold, imp in enumerate(cv_result.imp):
             exp.dump_df(imp, f"imp/fold{fold}", ext="parquet")

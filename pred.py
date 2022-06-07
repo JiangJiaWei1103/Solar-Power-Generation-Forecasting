@@ -93,12 +93,13 @@ def main(args: Namespace) -> None:
     dp.run_before_cv()
 
     # Load well-trained models
-    model_folds = args.model_folds
-    model_path = os.path.join(artif_path, "models")
+    model_type = args.model_type
+    model_ids = args.model_ids
+    model_path = os.path.join(artif_path, "models", model_type)
 
     models = []
-    for fold, model_file in enumerate(sorted(os.listdir(model_path))):
-        if fold not in model_folds:
+    for mid, model_file in enumerate(sorted(os.listdir(model_path))):
+        if mid not in model_ids:
             continue
         with open(os.path.join(model_path, model_file), "rb") as f:
             models.append(pickle.load(f))

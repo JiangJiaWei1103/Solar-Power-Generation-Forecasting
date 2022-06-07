@@ -10,31 +10,29 @@ from typing import Any, Dict, List
 from lightgbm import LGBMRegressor
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import Ridge
-from sklearn.model_selection import BaseCrossValidator
 from xgboost import XGBRegressor
 
 
 def build_models(
-    cv: BaseCrossValidator, model_name: str, model_params: Dict[str, Any]
+    model_name: str,
+    model_params: Dict[str, Any],
+    n_models: int,
 ) -> List[BaseEstimator]:
     """Build and return estimators to train and evaluate in different
-    cv folds.
+    cv folds or random seeds.
 
     Parameter:
-        cv: cross validator
         model_name: name of the estimator
         model_params: parameters of the estimator
+        n_models: number of models to build
     """
-    n_folds = cv.get_n_splits()
-
     if model_name == "lgbm":
         model = LGBMRegressor
     elif model_name == "ridge":
         model = Ridge
     elif model_name == "xgb":
-        # See nyaggle to adjust some dumping and parameter cfg
         model = XGBRegressor
 
-    models = [model(**model_params) for _ in range(n_folds)]
+    models = [model(**model_params) for _ in range(n_models)]
 
     return models

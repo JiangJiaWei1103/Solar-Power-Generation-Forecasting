@@ -104,17 +104,22 @@ class Experiment(object):
         dump_path = os.path.join(DUMP_PATH, file_name)
         df.to_parquet(f"{dump_path}.{ext}", index=False)
 
-    def dump_model(self, model: BaseEstimator, fold: int) -> None:
+    def dump_model(self, model: BaseEstimator, model_type: str, mid: int) -> None:
         """Dump estimator to corresponding path.
 
         Parameters:
             model: well-trained estimator
-            fold: fold number at which the estimator is trained
+            model_type: type of the model, the choices are as follows:
+                {"fold", "whole"}
+            mid: identifer of the model
 
         Return:
             None
         """
-        dump_path = os.path.join(DUMP_PATH, "models", f"fold{fold}.pkl")
+        model_file_prefix = "fold" if model_type == "fold" else "seed"
+        dump_path = os.path.join(
+            DUMP_PATH, "models", model_type, f"{model_file_prefix}{mid}.pkl"
+        )
         with open(dump_path, "wb") as f:
             pickle.dump(model, f)
 
@@ -149,6 +154,8 @@ class Experiment(object):
         os.mkdir(DUMP_PATH)
         os.mkdir(os.path.join(DUMP_PATH, "config"))
         os.mkdir(os.path.join(DUMP_PATH, "models"))
+        for model_type in ["fold", "whole"]:
+            os.mkdir(os.path.join(DUMP_PATH, "models", model_type))
         os.mkdir(os.path.join(DUMP_PATH, "trafos"))
         os.mkdir(os.path.join(DUMP_PATH, "preds"))
         for pred_type in ["oof", "holdout"]:
