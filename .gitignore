@@ -19,3 +19,6 @@ output/
 # Submission
 submission.csv
 submissions/
+
+# Local misc
+pred_analysis_local.ipynb
