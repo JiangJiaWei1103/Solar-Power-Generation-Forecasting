@@ -1,0 +1,16 @@
+# Configuration file for model architecture, NaiveRNN
+# Temporal Convolution
+n_feats: 19
+t_window: 28
+conv_out_ch: 64
+kernel_size: 3
+use_layer_norm: False
+tconv_act: null
+# RNN
+rnn_h_dim: 64
+rnn_n_layers: 1
+rnn_dropout: 0
+# Output
+use_cap: True
+# Common
+common_dropout: 0

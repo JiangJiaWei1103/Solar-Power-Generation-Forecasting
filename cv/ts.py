@@ -36,7 +36,13 @@ class GPTSSplit(_BaseKFold):
         n_time_step_oof: int = 112,
         max_train_n_time_step: int = 0,
     ):
-        super().__init__(n_splits, shuffle=False, random_state=None)
+        if n_splits == 1:
+            # Group time series split for single-fold scenario
+            self.n_splits = n_splits
+            self.shuffle = False
+            self.random_state = None
+        else:
+            super().__init__(n_splits, shuffle=False, random_state=None)
         self.n_time_step_oof = n_time_step_oof
         self.max_train_n_time_step = max_train_n_time_step
 

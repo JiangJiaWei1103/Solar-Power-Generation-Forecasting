@@ -173,11 +173,19 @@ class InferArgParser(BaseArgParser):
             help="version of the model used to predict",
         )
         self.argparser.add_argument(
-            "--model-folds",
+            "--model-type",
+            type=str,
+            default=None,
+            choices=["fold", "whole"],
+            help="type of the models used to predict",
+        )
+        self.argparser.add_argument(
+            "--model-ids",
             type=int,
             default=None,
             nargs="*",
-            help="fold numbers of models used to predict",
+            help="identifiers of models used to predict (fold numbers or "
+            "seed numbers)",
         )
         self.argparser.add_argument(
             "--device",
