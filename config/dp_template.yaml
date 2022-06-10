@@ -38,7 +38,7 @@ fe:
     mine_temp: False
 
 # =Drop outliers=
-drop_outliers: True
+drop_outliers: top3
 
 # =Holdout=
 holdout:

@@ -55,7 +55,8 @@ class DataProcessor:
         print("Run data cleaning and processing before data splitting...")
         self._df = self._df.sort_values("Date").reset_index(drop=True)
         #         self._convert_irra_m()   # Deprecated (raw data has been converted)
-        self._drop_outliers()
+        if self.drop_outliers is not None:
+            self._drop_outliers()
         self._run_fe()
 
         # Split datasets and holdout
@@ -126,10 +127,22 @@ class DataProcessor:
 
     def _drop_outliers(self) -> None:
         """Drop explicit outliers."""
-        outlier_idx = self._df[self._df[TARGET] == 6752].index
-        # outlier_idx2 = self._df[self._df[TARGET] == 3765].index # 492.8S 2021/1/27
-        print(f"Start dropping {len(outlier_idx)} outliers...")
-        self._df = self._df.drop(outlier_idx, axis=0).reset_index(drop=True)
+        if self.drop_outliers == "top3":
+            ol1 = self._df[self._df[TARGET] == 6752].index[0]  # 314.88S 21/7/19
+            ol2 = self._df[self._df[TARGET] == 3765].index[0]  # 492.8S 21/1/27
+            ol3 = self._df[self._df[TARGET] == 3187].index[0]  # 438.3N 21/9/10
+            ols = [ol1, ol2, ol3]
+        elif self.drop_outliers == "period":
+            weird_period = (self._df["Date"] >= "2021-09-09") & (
+                self._df["Date"] <= "2021-10-07"
+            )
+            ols = self._df[
+                (self._df["Capacity"] == 438.3) & weird_period
+            ].index.tolist()
+
+        print(f"Start dropping {len(ols)} outliers...")
+        self._df = self._df.drop(ols, axis=0).reset_index(drop=True)
+        print("Done.")
 
     def _run_fe(self) -> None:
         """Setup feature engineer, and run feature engineering."""

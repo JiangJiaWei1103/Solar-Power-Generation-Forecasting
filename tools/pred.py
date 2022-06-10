@@ -89,6 +89,7 @@ def main(args: Namespace) -> None:
     dp_cfg_path = os.path.join(artif_path, "config/dp.yaml")
     with open(dp_cfg_path, "r") as f:
         dp_cfg = yaml.full_load(f)
+    dp_cfg["drop_outliers"] = None  # No outliers to drop
     dp = DataProcessor(args.input_path, **dp_cfg)
     dp.run_before_cv()
 
