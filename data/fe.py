@@ -7,6 +7,8 @@ from typing import List
 
 import pandas as pd
 
+from metadata import MODULE_META
+
 
 class FE:
     """Feature engineer.
@@ -22,10 +24,19 @@ class FE:
     _eng_feats: List[str] = []
     _cat_feats: List[str] = []
 
-    def __init__(self, add_month: bool, label_enc: List[str], mine_temp: bool):
+    def __init__(
+        self,
+        add_month: bool,
+        add_module_meta: bool,
+        label_enc: List[str],
+        mine_temp: List[str],
+        mine_irrad: List[str],
+    ):
         self.add_month = add_month
+        self.add_module_meta = add_module_meta
         self.label_enc = label_enc
         self.mine_temp = mine_temp
+        self.mine_irrad = mine_irrad
 
     def run(self, df: pd.DataFrame) -> pd.DataFrame:
         """Run feature engineering.
@@ -40,10 +51,14 @@ class FE:
 
         if self.add_month:
             self._add_month()
+        if self.add_module_meta:
+            self._add_module_meta()
         if self.label_enc != []:
             self._encode_pseudo_cat()
-        if self.mine_temp:
+        if self.mine_temp != []:
             self._mine_temp()
+        if self.mine_irrad != []:
+            self._mine_irrad()
 
         return self._df
 
@@ -64,6 +79,12 @@ class FE:
         self._eng_feats.append("Month")
         self._cat_feats.append("Month")
 
+    def _add_module_meta(self) -> None:
+        """Add metadata of generator module."""
+        for feat, meta_map in MODULE_META.items():
+            self._df[feat] = self._df["Module"].map(meta_map)
+            self._eng_feats.append(feat)
+
     def _encode_pseudo_cat(self) -> None:
         """Apply label encoder on pseudo categorical features."""
         print(f"Encoding pseudo categorical features {self.label_enc}...")
@@ -78,6 +99,17 @@ class FE:
 
     def _mine_temp(self) -> None:
         """Mine temperature-related features."""
+        temp_feats = [
+            "TempRange",
+            "TempMax2Avg",
+            "TempAvg2Min",
+            "Temp_m2Temp",
+            "TempRangeRatio",
+            "TempMax2AvgRatio",
+            "TempAvg2MinRatio",
+            "Temp_m2TempRatio",
+        ]
+
         print("Mining temperature-related features...")
         # Difference
         self._df["TempRange"] = self._df["TempMax"] - self._df["TempMin"]
@@ -97,23 +129,27 @@ class FE:
         self._df["Temp_m2TempRatio"] = self._df["Temp_m2Temp"] / (
             self._df["Temp"].abs() + self.EPS
         )
-        print("Done.")
 
-        self._eng_feats += [
-            "TempRange",
-            "TempMax2Avg",
-            "TempAvg2Min",
-            "TempRangeRatio",
-            "TempMax2AvgRatio",
-            "TempAvg2MinRatio",
-            "Temp_m2Temp",
-            "Temp_m2TempRatio",
-        ]
+        self._eng_feats += self.mine_temp
+        temp_feats_to_drop = [f for f in temp_feats if f not in self.mine_temp]
+        self._df.drop(temp_feats_to_drop, axis=1, inplace=True)
+        print("Done.")
 
     def _mine_irrad(self) -> None:
         """Mine irradiance-related features."""
+        irrad_feats = [
+            "Irrad_m2Irrad",
+            "Irrad_m2IrradRatio",
+        ]
         print("Mining irradiance-related features...")
-        pass
-        print("Done.")
+        # Difference
+        self._df["Irrad_m2Irrad"] = self._df["Irradiance_m"] - self._df["Irradiance"]
+        # Ratio
+        self._df["Irrad_m2IrradRatio"] = self._df["Irrad_m2Irrad"] / (
+            self._df["Irradiance"].abs() + self.EPS
+        )
 
-        self._eng_feats += [""]
+        self._eng_feats += self.mine_irrad
+        irrad_feats_to_drop = [f for f in irrad_feats if f not in self.mine_irrad]
+        self._df.drop(irrad_feats_to_drop, axis=1, inplace=True)
+        print("Done.")

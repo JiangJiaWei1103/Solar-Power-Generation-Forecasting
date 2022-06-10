@@ -34,8 +34,10 @@ feats: [
 # =Feature engineering=
 fe:
     add_month: False
+    add_module_meta: False
     label_enc: []
-    mine_temp: False
+    mine_temp: []
+    mine_irrad: []
 
 # =Drop outliers=
 drop_outliers: top3
