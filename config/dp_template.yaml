@@ -4,8 +4,9 @@ feats: [
     # =TID=
     'Date',
     # =Location=
-    'Lat',
+    'Lat', 'Lon', 'Loc',
     # =Generator=
+    'Module',
     'Capacity',
     'Irradiance_m', 'Temp_m',
     'Angle',
