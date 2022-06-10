@@ -154,9 +154,16 @@ class DataProcessor:
 
     def _split_X_y(self) -> None:
         """Split data into X and y sets."""
+        feats = self.feats
+        # Add newly engineered features into feature set
+        # (note that the ordering of df columns matters)
+        for ft in self.fe.get_eng_feats():
+            if ft not in feats:
+                feats.append(ft)
+
         print("Start splitting X and y set...")
+        print(f"Feature set:\n{feats}")
         #         self._X = self._df[self.feats]   # DL workaround (Date for Dataset)
-        feats = self.feats + self.fe.get_eng_feats()
         self._X = self._df[[f for f in feats if f != "Date"]]
         self._y = self._df[TARGET]
         print("Done.")
