@@ -10,7 +10,7 @@ import gc
 import warnings
 from argparse import Namespace
 from collections import namedtuple
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -147,6 +147,38 @@ def _get_feat_imp(
     return feat_imp
 
 
+def _get_best_n_estimaters(
+    cv_scheme: str, models: List[BaseEstimator]
+) -> Optional[int]:
+    """Derive and return number of boosted trees to fit in full
+    training process.
+
+    Parameters:
+        cv_scheme: cross-validation scheme
+        models: well-trained estimators
+    """
+    if is_gbdt_instance(models[-1], "lgbm"):
+        if cv_scheme == "gpts":
+            best_n_estimators = int(models[-1].best_iteration_ / 0.6)
+        else:
+            best_n_estimators = 0
+            for model in models:
+                best_n_estimators += model.best_iteration_ / len(models)
+            best_n_estimators = int(best_n_estimators / (1 - 1 / len(models)))
+    elif is_gbdt_instance(models[-1], "xgb"):
+        if cv_scheme == "gpts":
+            best_n_estimators = int(models[-1].best_iteration / 0.6)
+        else:
+            best_n_estimators = 0
+            for model in models:
+                best_n_estimators += model.best_iteration / len(models)
+            best_n_estimators = int(best_n_estimators / (1 - 1 / len(models)))
+    else:
+        best_n_estimators = None
+
+    return best_n_estimators
+
+
 def main(args: Namespace) -> None:
     """Run training and evaluation processes, then retrain model on
     the whole training set, called full training .
@@ -190,6 +222,7 @@ def main(args: Namespace) -> None:
         if cv_result.holdout_pred is not None:
             for fold, holdout in enumerate(cv_result.holdout_pred):
                 exp.dump_ndarr(f"holdout_fold{fold}", holdout)
+        exp.incorp_meta_feats(cv_result.oof_pred)
 
         for fold, model in enumerate(models):
             exp.dump_model(model, model_type="fold", mid=fold)
@@ -202,7 +235,7 @@ def main(args: Namespace) -> None:
         _ = gc.collect()
 
         # Start full training process
-        best_n_estimators = int(models[-1].best_iteration_ / 0.6)
+        best_n_estimators = _get_best_n_estimaters(args.cv_scheme, models)
         full_train_result = _full_train(
             exp=exp,
             dp=dp,

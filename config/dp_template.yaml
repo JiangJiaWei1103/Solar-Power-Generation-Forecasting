@@ -45,6 +45,7 @@ fe:
     label_enc: []
     mine_temp: []
     mine_irrad: []
+    meta_feats: []
 
 # =Drop outliers=
 drop_outliers: top3

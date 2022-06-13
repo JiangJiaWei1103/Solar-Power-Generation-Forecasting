@@ -7,7 +7,8 @@ from typing import List
 
 import pandas as pd
 
-from metadata import MODULE_META
+from metadata import MODULE_META, PK
+from paths import OOF_META_FEATS_PATH, TEST_META_FEATS_PATH
 
 
 class FE:
@@ -15,10 +16,21 @@ class FE:
 
     Parameters:
         add_month: whether to add month indicator
+        add_module_meta: whether to add metadata of generator module
         label_enc: list of features interpreted as categorical features
-        mine_temp: whether to mine temperature-related features
+        mine_temp: list of temperature-related features
+        mine_irrad: list of irradiance-related features
+        meta_feats: list of well-trained model versions
+            *Note: Meta features are used for stacking or restacking.
+                Model versions indicate the corresponding versions of
+                predicting results.
+        infer: whether the process is in inference mode
     """
 
+    MV2EID = {
+        "l5": "lgbm-hjc3rp0j",
+        "l6": "lgbm-54or6r30",
+    }  # Base model version to corresponding experiment identifier
     EPS: float = 1e-7
     _df: pd.DataFrame = None
     _eng_feats: List[str] = []
@@ -31,12 +43,17 @@ class FE:
         label_enc: List[str],
         mine_temp: List[str],
         mine_irrad: List[str],
+        meta_feats: List[str],
+        infer: bool = False,
     ):
         self.add_month = add_month
         self.add_module_meta = add_module_meta
         self.label_enc = label_enc
         self.mine_temp = mine_temp
         self.mine_irrad = mine_irrad
+        self.meta_feats = meta_feats
+
+        self.infer = infer
 
     def run(self, df: pd.DataFrame) -> pd.DataFrame:
         """Run feature engineering.
@@ -59,6 +76,8 @@ class FE:
             self._mine_temp()
         if self.mine_irrad != []:
             self._mine_irrad()
+        if self.meta_feats != []:
+            self._add_meta_feats
 
         return self._df
 
@@ -129,11 +148,11 @@ class FE:
         self._df["Temp_m2TempRatio"] = self._df["Temp_m2Temp"] / (
             self._df["Temp"].abs() + self.EPS
         )
+        print("Done.")
 
         self._eng_feats += self.mine_temp
         temp_feats_to_drop = [f for f in temp_feats if f not in self.mine_temp]
         self._df.drop(temp_feats_to_drop, axis=1, inplace=True)
-        print("Done.")
 
     def _mine_irrad(self) -> None:
         """Mine irradiance-related features."""
@@ -148,8 +167,26 @@ class FE:
         self._df["Irrad_m2IrradRatio"] = self._df["Irrad_m2Irrad"] / (
             self._df["Irradiance"].abs() + self.EPS
         )
+        print("Done.")
 
         self._eng_feats += self.mine_irrad
         irrad_feats_to_drop = [f for f in irrad_feats if f not in self.mine_irrad]
         self._df.drop(irrad_feats_to_drop, axis=1, inplace=True)
+
+    def _add_meta_feats(self) -> None:
+        """Add meta features for stacking or restacking."""
+        if self.infer:
+            # Testing prediction is used
+            meta_feats = pd.read_csv(TEST_META_FEATS_PATH)
+        else:
+            # Unseen prediction is used
+            meta_feats = pd.read_csv(OOF_META_FEATS_PATH)
+
+        print("Adding meta features...")
+        oof_cols = []
+        for model_v in self.meta_feats:
+            oof_cols.append(self.MV2EID[model_v])
+        meta_feats = meta_feats[PK + oof_cols]
+
+        self._df = self._df.merge(meta_feats, how="left", on=PK, validate="1:1")
         print("Done.")

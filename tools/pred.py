@@ -20,6 +20,8 @@ from sklearn.base import BaseEstimator
 import wandb
 from data.data_processor import DataProcessor
 from engine.defaults import InferArgParser
+from metadata import TARGET
+from paths import TEST_META_FEATS_PATH
 
 warnings.simplefilter("ignore")
 
@@ -44,22 +46,23 @@ def _predict(dp: DataProcessor, models: List[BaseEstimator]) -> np.ndarray:
     return pred
 
 
-def _gen_submission(dp: DataProcessor, pred: np.ndarray) -> None:
-    """Generate final submission file.
+def _gen_submission(dp: DataProcessor, pred: np.ndarray) -> pd.DataFrame:
+    """Generate and return final submission.
 
     Parameters:
         dp: data processor
         pred: predicting results
 
     Return:
-        None
+        sub: final predicting results to submit
     """
     sub = pd.DataFrame()
     sub["ID"] = dp.get_df()["ID"]
     sub["Generation"] = pred
     sub.sort_values("ID", inplace=True)
     sub["ID"] = sub["ID"].astype("int64")
-    sub.to_csv("submission.csv", index=False)
+
+    return sub
 
 
 def main(args: Namespace) -> None:
@@ -90,6 +93,7 @@ def main(args: Namespace) -> None:
     with open(dp_cfg_path, "r") as f:
         dp_cfg = yaml.full_load(f)
     dp_cfg["drop_outliers"] = None  # No outliers to drop
+    dp_cfg["infer"] = True  # Flag process mode as 'inference'
     dp = DataProcessor(args.input_path, **dp_cfg)
     dp.run_before_cv()
 
@@ -109,7 +113,12 @@ def main(args: Namespace) -> None:
     pred = _predict(dp, models)
 
     # Generate final submission
-    _gen_submission(dp, pred)
+    sub = _gen_submission(dp, pred)
+
+    # Record predicting results to testing meta features
+    meta_feats = pd.read_csv(TEST_META_FEATS_PATH)
+    meta_feats[args.exp_id] = sub[TARGET]
+    meta_feats.to_csv(TEST_META_FEATS_PATH, index=False)
 
     # Push artifacts to remote
     artif = wandb.Artifact(name=f"{model_name.upper()}_infer", type="output")
