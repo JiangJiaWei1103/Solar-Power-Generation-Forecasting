@@ -114,6 +114,7 @@ def main(args: Namespace) -> None:
 
     # Generate final submission
     sub = _gen_submission(dp, pred)
+    sub.to_csv("./submission.csv", index=False)
 
     # Record predicting results to testing meta features
     meta_feats = pd.read_csv(TEST_META_FEATS_PATH)
