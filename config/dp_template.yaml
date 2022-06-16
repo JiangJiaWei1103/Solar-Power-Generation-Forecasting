@@ -46,7 +46,7 @@ fe:
     mine_temp: []
     mine_irrad: []
     meta_feats: []
-    knn_meta_feats: []
+    knn_meta_feats: {}
 
 # =Drop outliers=
 drop_outliers: top3
