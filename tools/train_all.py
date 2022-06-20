@@ -233,10 +233,12 @@ def main(args: Namespace) -> None:
 
         # Dump cv results
         exp.dump_ndarr("oof", cv_result.oof_pred)
+        # Turn off for training seasonal model
+        #         exp.incorp_meta_feats(cv_result.oof_pred)
+
         if cv_result.holdout_pred is not None:
             for fold, holdout in enumerate(cv_result.holdout_pred):
                 exp.dump_ndarr(f"holdout_fold{fold}", holdout)
-        #         exp.incorp_meta_feats(cv_result.oof_pred)
 
         for fold, model in enumerate(models):
             exp.dump_model(model, model_type="fold", mid=fold)
