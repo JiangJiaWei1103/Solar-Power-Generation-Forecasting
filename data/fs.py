@@ -12,6 +12,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from lightgbm import early_stopping, log_evaluation
 from sklearn.base import BaseEstimator, clone
 from sklearn.metrics import mean_squared_error as mse
 
@@ -178,7 +179,14 @@ class ForwardFS:
                     fit_params_fold["cat_features"] = cat_feats
 
             model = clone(self.model)
-            model.fit(X_tr, y_tr, **fit_params_fold)
+            if is_gbdt_instance(self.model, "lgbm"):
+                cb = [
+                    early_stopping(stopping_rounds=500, verbose=False),
+                    log_evaluation(period=0, show_stdv=False),
+                ]
+                model.fit(X_tr, y_tr, **fit_params_fold, callbacks=cb)
+            else:
+                model.fit(X_tr, y_tr, **fit_params_fold)
 
             oof_pred[val_idx] = _predict(model, X_val)
             prfs.append(np.sqrt(mse(y_val, oof_pred[val_idx])))  # Tmp hard-coded
