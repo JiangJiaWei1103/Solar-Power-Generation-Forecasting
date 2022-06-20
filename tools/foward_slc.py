@@ -100,7 +100,7 @@ class FSArgParser(BaseArgParser):
         self.argparser.add_argument(
             "--aux-target",
             type=str,
-            default=None,
+            default=TARGET,
             help="auxiliary target of the task",
         )
 
@@ -128,7 +128,7 @@ def main(args: Namespace) -> None:
     with open("./config/dp_template.yaml", "r") as f:
         dp_cfg = yaml.full_load(f)
     feat_base = dp_cfg["feats"]  # Total 48+42 base features are considered before FE
-    y = data[TARGET] if aux_target is None else data[aux_target]
+    y = data[aux_target]
 
     # Drop outliers (top3 extremely large target values)
     ols = []
@@ -186,7 +186,7 @@ def main(args: Namespace) -> None:
         cv_iter = cv.split(data, cap_code, None)
     elif cv_scheme == "gpts":
         cv = GPTSSplit(n_splits=n_folds, n_time_step_oof=oof_size)
-        cv_iter.split(data, None, data[TID])
+        cv_iter = cv.split(data, None, data[TID])
 
     # Build model
     with open(f"./config/model/{model_name}.yaml", "r") as f:
