@@ -176,6 +176,7 @@ class DataProcessor:
         print(f"Feature set:\n{feats}")
         #         self._X = self._df[self.feats]   # DL workaround (Date for Dataset)
         self._X = self._df[[f for f in feats if f != "Date"]]
+        # Modify to Irradiance_m or Temp_m to train imputers
         self._y = self._df[TARGET]
         print("Done.")
 
