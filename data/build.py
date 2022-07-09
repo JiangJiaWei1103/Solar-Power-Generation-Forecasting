@@ -37,7 +37,7 @@ def build_dataloaders(
         train_loader: training data loader
         val_loader: validation data loader
     """
-    if model_name in ["MLP", "NaiveRNN"]:
+    if model_name in ["MLP", "NaiveRNN", "TempFusionNaive"]:
         dataset = SinglePtDataset
         collate_fn = None
 

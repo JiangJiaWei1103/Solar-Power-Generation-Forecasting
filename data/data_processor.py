@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, QuantileTransformer, StandardScaler
 
-from metadata import TARGET
+from metadata import PK, TARGET
 from paths import DUMP_PATH
 from validation.holdout import HoldoutSplitter
 
@@ -53,9 +53,10 @@ class DataProcessor:
             None
         """
         print("Run data cleaning and processing before data splitting...")
-        self._df = self._df.sort_values("Date").reset_index(drop=True)
+        self._df = self._df.sort_values(PK).reset_index(drop=True)
         #         self._convert_irra_m()   # Deprecated (raw data has been converted)
-        self._drop_outliers()
+        if self.drop_outliers is not None:
+            self._drop_outliers()
         self._run_fe()
 
         # Split datasets and holdout
@@ -109,6 +110,12 @@ class DataProcessor:
 
     def _setup(self) -> None:
         """Retrieve all parameters specified to process data."""
+        # Specify process mode
+        if self._dp_cfg.get("infer") is not None:
+            self._infer = True
+        else:
+            self._infer = False
+
         self.feats = self._dp_cfg["feats"]
         self.fe_cfg = self._dp_cfg["fe"]
 
@@ -126,13 +133,30 @@ class DataProcessor:
 
     def _drop_outliers(self) -> None:
         """Drop explicit outliers."""
-        outlier_idx = self._df[self._df[TARGET] == 6752].index
-        # outlier_idx2 = self._df[self._df[TARGET] == 3765].index # 492.8S 2021/1/27
-        print(f"Start dropping {len(outlier_idx)} outliers...")
-        self._df = self._df.drop(outlier_idx, axis=0).reset_index(drop=True)
+        ols = []
+        if self.drop_outliers == "top3":
+            ol1 = self._df[self._df[TARGET] == 6752].index  # 314.88S 21/7/19
+            ol2 = self._df[self._df[TARGET] == 3765].index  # 492.8S 21/1/27
+            ol3 = self._df[self._df[TARGET] == 3187].index  # 438.3N 21/9/10
+            for ol in [ol1, ol2, ol3]:
+                if len(ol) == 0:
+                    continue
+                ols.append(ol[0])
+        elif self.drop_outliers == "period":
+            weird_period = (self._df["Date"] >= "2021-09-09") & (
+                self._df["Date"] <= "2021-10-07"
+            )
+            ols = self._df[
+                (self._df["Capacity"] == 438.3) & weird_period
+            ].index.tolist()
+
+        print(f"Start dropping {len(ols)} outliers...")
+        self._df = self._df.drop(ols, axis=0).reset_index(drop=True)
+        print("Done.")
 
     def _run_fe(self) -> None:
         """Setup feature engineer, and run feature engineering."""
+        self.fe_cfg["infer"] = self._infer
         self.fe = FE(**self.fe_cfg)
 
         print("Start feature engineering...")
@@ -141,10 +165,18 @@ class DataProcessor:
 
     def _split_X_y(self) -> None:
         """Split data into X and y sets."""
+        feats = self.feats
+        # Add newly engineered features into feature set
+        # (note that the ordering of df columns matters)
+        for ft in self.fe.get_eng_feats():
+            if ft not in feats:
+                feats.append(ft)
+
         print("Start splitting X and y set...")
+        print(f"Feature set:\n{feats}")
         #         self._X = self._df[self.feats]   # DL workaround (Date for Dataset)
-        feats = self.feats + self.fe.get_eng_feats()
         self._X = self._df[[f for f in feats if f != "Date"]]
+        # Modify to Irradiance_m or Temp_m to train imputers
         self._y = self._df[TARGET]
         print("Done.")
 

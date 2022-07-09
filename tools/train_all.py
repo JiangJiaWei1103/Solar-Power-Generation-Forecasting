@@ -10,7 +10,7 @@ import gc
 import warnings
 from argparse import Namespace
 from collections import namedtuple
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -80,8 +80,12 @@ def _full_train(
     # ===in-place scaling?===
 
     # Adjust model fitting process
-    model_params["n_estimators"] = best_n_estimators
-    model_params["early_stopping_round"] = 0
+    if exp.args.model_name in ["lgbm", "xgb"]:
+        model_params["n_estimators"] = best_n_estimators
+        model_params["early_stopping_round"] = 0
+    elif exp.args.model_name == "cat":
+        model_params["iterations"] = best_n_estimators
+        model_params["early_stopping_rounds"] = None
 
     for i, seed in enumerate([8, 168, 88, 888, 2022]):
         # Configure full training seed-level experiment entry
@@ -95,11 +99,13 @@ def _full_train(
 
         # Setup fit parameters
         fit_params_seed = copy.copy(fit_params)
-        if is_gbdt_instance(model, ("lgbm", "xgb")):
+        if is_gbdt_instance(model, ("lgbm", "xgb", "cat")):
             fit_params_seed["eval_set"] = [(X, y)]
 
-            if not is_gbdt_instance(model, "xgb"):
+            if is_gbdt_instance(model, "lgbm"):
                 fit_params_seed["categorical_feature"] = dp.get_cat_feats()
+            elif is_gbdt_instance(model, "cat"):
+                fit_params_seed["cat_features"] = dp.get_cat_feats()
 
         model.fit(X, y, **fit_params_seed)
         models.append(model)
@@ -110,7 +116,7 @@ def _full_train(
         tr_scores.append(tr_score)
 
         # Record feature importance
-        if is_gbdt_instance(model, ("lgbm", "xgb")):
+        if is_gbdt_instance(model, ("lgbm", "xgb", "cat")):
             if isinstance(X, pd.DataFrame):
                 feats = X.columns
             else:
@@ -141,10 +147,50 @@ def _get_feat_imp(
 
     if is_gbdt_instance(model, "lgbm"):
         feat_imp[f"importance_{imp_type}"] = model.booster_.feature_importance(imp_type)
-    elif is_gbdt_instance(model, "xgb"):
+    elif is_gbdt_instance(model, ("xgb", "cat")):
         feat_imp[f"importance_{imp_type}"] = model.feature_importances_
 
     return feat_imp
+
+
+def _get_best_n_estimaters(
+    cv_scheme: str, models: List[BaseEstimator]
+) -> Optional[int]:
+    """Derive and return number of boosted trees to fit in full
+    training process.
+
+    Parameters:
+        cv_scheme: cross-validation scheme
+        models: well-trained estimators
+    """
+    if is_gbdt_instance(models[-1], "lgbm"):
+        if cv_scheme == "gpts":
+            best_n_estimators = int(models[-1].best_iteration_ / 0.6)
+        else:
+            best_n_estimators = 0
+            for model in models:
+                best_n_estimators += model.best_iteration_ / len(models)
+            best_n_estimators = int(best_n_estimators / (1 - 1 / len(models)))
+    elif is_gbdt_instance(models[-1], "xgb"):
+        if cv_scheme == "gpts":
+            best_n_estimators = int(models[-1].best_iteration / 0.6)
+        else:
+            best_n_estimators = 0
+            for model in models:
+                best_n_estimators += model.best_iteration / len(models)
+            best_n_estimators = int(best_n_estimators / (1 - 1 / len(models)))
+    elif is_gbdt_instance(models[-1], "cat"):
+        if cv_scheme == "gpts":
+            best_n_estimators = int(models[-1].get_best_iteration() / 0.6)
+        else:
+            best_n_estimators = 0
+            for model in models:
+                best_n_estimators += model.get_best_iteration() / len(models)
+            best_n_estimators = int(best_n_estimators / (1 - 1 / len(models)))
+    else:
+        best_n_estimators = None
+
+    return best_n_estimators
 
 
 def main(args: Namespace) -> None:
@@ -187,6 +233,9 @@ def main(args: Namespace) -> None:
 
         # Dump cv results
         exp.dump_ndarr("oof", cv_result.oof_pred)
+        # Turn off for training seasonal model
+        #         exp.incorp_meta_feats(cv_result.oof_pred)
+
         if cv_result.holdout_pred is not None:
             for fold, holdout in enumerate(cv_result.holdout_pred):
                 exp.dump_ndarr(f"holdout_fold{fold}", holdout)
@@ -202,7 +251,7 @@ def main(args: Namespace) -> None:
         _ = gc.collect()
 
         # Start full training process
-        best_n_estimators = int(models[-1].best_iteration_ / 0.6)
+        best_n_estimators = _get_best_n_estimaters(args.cv_scheme, models)
         full_train_result = _full_train(
             exp=exp,
             dp=dp,

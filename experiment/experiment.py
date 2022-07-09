@@ -21,7 +21,7 @@ from sklearn.base import BaseEstimator
 
 import wandb
 from config.config import gen_exp_id, setup_dp, setup_model, setup_proc
-from paths import DUMP_PATH
+from paths import DUMP_PATH, OOF_META_FEATS_PATH
 
 
 class Experiment(object):
@@ -122,6 +122,29 @@ class Experiment(object):
         )
         with open(dump_path, "wb") as f:
             pickle.dump(model, f)
+
+    def incorp_meta_feats(self, pred: np.ndarray) -> None:
+        """Incorporate the predicting results into meta feature pool.
+
+        Parameters:
+            pred: predicting results
+
+        Return:
+            None
+        """
+        if not os.path.exists(OOF_META_FEATS_PATH):
+            meta_feats = pd.DataFrame()
+        else:
+            meta_feats = pd.read_csv(OOF_META_FEATS_PATH)
+
+        if self.dp_cfg["fe"]["meta_feats"] != []:
+            # Stacking or restacking is triggered
+            # Tmp workaround, it's better to used merge to avoid unalignment
+            pred_padded = np.zeros(len(meta_feats))
+            pred_padded[-len(pred) :] = pred
+            pred = pred_padded
+        meta_feats[self.exp_id] = pred
+        meta_feats.to_csv(OOF_META_FEATS_PATH, index=False)
 
     def _parse_model_cfg(self) -> None:
         """Configure model parameters and parameters passed to fit

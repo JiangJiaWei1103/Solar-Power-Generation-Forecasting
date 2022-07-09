@@ -49,6 +49,14 @@ IRRA_STA = {
     "tya": [498.6, 283.2],  # Taoyuan agriculture 桃園農改場
     "aic": [438.3, 499.8],  # Agriculture-Industrial Center 農工中心
 }
+# AQ station
+AQ_STA = {
+    "ki": [498.6],
+    "ty": [283.2],
+    "dy": [438.3, 499.8],
+    "xx": [246.4, 492.8],
+    "ch": [99.2, 99.84, 267.52, 278.4, 314.88, 343.2, 352.0, 498.56],
+}
 # Generator module metadata
 MODULE_META = {
     "Pmax": {
@@ -88,3 +96,9 @@ MODULE_META = {
         "AUO PM060MW3 325W": 19.5,
     },
 }
+# Clusters
+CLUST = {
+    "N": [283.2, 438.3, 498.6, 499.8],
+    "S": [99.2, 99.84, 246.4, 267.52, 278.4, 314.88, 343.2, 352, 492.8, 498.56],
+}
+CAP2CLUST = {cap: clust for clust, caps in CLUST.items() for cap in caps}

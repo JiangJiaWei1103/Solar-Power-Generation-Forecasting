@@ -4,8 +4,9 @@ feats: [
     # =TID=
     'Date',
     # =Location=
-    'Lat',
+    'Lat', 'Lon', 'Loc',
     # =Generator=
+    'Module',
     'Capacity',
     'Irradiance_m', 'Temp_m',
     'Angle',
@@ -28,16 +29,29 @@ feats: [
     # =Precipitation (All with 75%~80% up zero values in train/test.)=
     'Precp', 'PrecpMax10', 'PrecpMax60',
     'Precp_i',
+    # =AQ=
+    'COMean', 'COMin', 'COMax', 'COMedian', 'COStd', 'COSkew', 'COKurt',
+    'NO2Mean', 'NO2Min', 'NO2Max', 'NO2Median', 'NO2Std', 'NO2Skew', 'NO2Kurt',
+    'O3Mean', 'O3Min', 'O3Max', 'O3Median', 'O3Std', 'O3Skew', 'O3Kurt',
+    'PM10Mean', 'PM10Min', 'PM10Max', 'PM10Median', 'PM10Std', 'PM10Skew', 'PM10Kurt',
+    'PM2.5Mean', 'PM2.5Min', 'PM2.5Max', 'PM2.5Median', 'PM2.5Std', 'PM2.5Skew', 'PM2.5Kurt',
+    'SO2Mean', 'SO2Min', 'SO2Max', 'SO2Median', 'SO2Std', 'SO2Skew', 'SO2Kurt',
+    # =Target Encoding=
+    'GenMean', 'GenMonthMean',
 ]
 
 # =Feature engineering=
 fe:
     add_month: False
+    add_module_meta: False
     label_enc: []
-    mine_temp: False
+    mine_temp: []
+    mine_irrad: []
+    meta_feats: []
+    knn_meta_feats: {}
 
 # =Drop outliers=
-drop_outliers: True
+drop_outliers: top3
 
 # =Holdout=
 holdout:

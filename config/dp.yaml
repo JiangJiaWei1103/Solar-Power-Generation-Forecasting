@@ -1,46 +1,110 @@
+drop_outliers: top3
+
 holdout:
     n_splits: 0
-    chrono: null #False
-    ts_col: null #Date
-    t_start: null #["2021-08-28", "2021-09-28"]
-    t_end: null #["2021-09-28", "2021-10-28"]
-    holdout_ratio: null  # 0.2
+    chrono: null
+    ts_col: null
+    t_start: null
+    t_end: null
+    holdout_ratio: null
+
 feats: [
     # =TID=
     'Date',
     # =Location=
-    #'Lat', 'Lon', 'Location',   # Cat.
+    #'Location',
+    #'Lat',
+    #'Lon',
     # =Generator=
-    'Capacity',   # Cat.
-    'Irradiance_m', 'Temp_m',
-    #'Angle', 'Module',   # Cat.
+    #'Module',
+    #'Capacity',
+    'Irradiance_m',
+    #'Temp_m',
+    #'Angle',
     # =Press=
-    'StnPres', 'StnPresMax', 'StnPresMin', 'SeaPres',
-    #'StnPres_i', 'StnPresMax_i', 'StnPresMin_i',
+    #'StnPres',
+    #'StnPresMax', #'StnPresMin',
+    'SeaPres',
+    #'StnPres_i',
+    #'StnPresMax_i',
+    #'StnPresMin_i',
     # =Irradiance=
-    'Irradiance', 'SunShine',
-    #'Irradiance_gap', 'Irradiance_dev',
+    'Irradiance',
+    #'SunShine',
+    #'SunLightHr',
+    #'SunRise',
+    'SunSet',
+    #'ZenithAngle',
+    #'AirMassNoon',
     #'Irradiance_i',
     # =Temperature=
-    'Temp', 'TempMax', 'TempMin', 'TdDewPoint',
-    #'Temp_t', 'Temp_i', 'TempMax_i', 'TempMin_i',
+    #'Temp',
+    #'TempMax',
+    #'TempMin',
+    #'TdDewPoint',
+    #'Temp_t',
+    #'Temp_i',
+    #'TempMax_i',
+    #'TempMin_i',
     # =Humidity=
-    'RH', 'RHMin',
-    #'RH_i', 'RHMin_i',
+    #'RH',
+    'RHMin',
+    #'RH_i',
+    #'RHMin_i',
     # =Wind=
-    'WS', 'WSGust', #'WD', 'WDGust',
-    #'WS_i', 'WD_i', 'WSGust_i', 'WDGust_i'
-    # =Precipitation=
-    'Precp', 'PrecpMax10', 'PrecpMax60',
+    #'WS', #'WSGust',
+    #'WD',
+    #'WDGust', #(Wind direction is mentioned in paper.)
+    #'WS_i',
+    #'WD_i',
+    #'WSGust_i',
+    #'WDGust_i',
+    # =Precipitation (All with 75%~80% up zero values in train/test.)=
+    #'Precp',
+    #'PrecpMax10',
+    #'PrecpMax60',
     #'Precp_i',
+    # =AQ=
+    #'COMean',
+    #'COMin', #'COMax',
+    #'COMedian',
+    #'COStd',
+    #'COSkew', 'COKurt',
+    #'NO2Mean', #'NO2Min', 'NO2Max', 'NO2Median',
+    #'NO2Std',
+    #'NO2Skew', 'NO2Kurt',
+    #'O3Mean',
+    #'O3Min', #'O3Max',
+    #'O3Median', #'O3Std', 'O3Skew',
+    #'O3Kurt',
+    #'PM10Mean',
+    #'PM10Min', #'PM10Max', 'PM10Median', 'PM10Std',
+    #'PM10Skew', 'PM10Kurt',
+    #'PM2.5Mean', 'PM2.5Min', 'PM2.5Max', 'PM2.5Median',
+    #'PM2.5Std', 'PM2.5Skew', 'PM2.5Kurt',
+    #'SO2Mean', #'SO2Min', 'SO2Max',
+    #'SO2Median', #'SO2Std', #'SO2Skew',
+    #'SO2Kurt',
+    #'GenMean', 'GenMonthMean',
 ]
+
+fe:
+    # Added features should be evaluated one by one
+    add_month: False
+    add_module_meta: False
+    label_enc: []
+    mine_temp: ['Temp_m2TempRatio']
+    mine_irrad: ['Irrad_m2IrradRatio']
+    meta_feats: []
+    knn_meta_feats: {} #{'l5': 3, 'l6': 3, 'x10': 3}
+
 scale:
-    type: standard   #quantile
+    type: null # standard   #quantile
     n_quantiles: null   #500
     cols: []
 
 # DL-Specific Dataset
-dataset:
-    t_window: 28
-    horizon: 0   # Can use feature on the same day
-    use_capacity: True
+dataset: null
+    #t_window: 28
+    #horizon: 0   # Can use feature on the same day
+    #use_capacity: False #True

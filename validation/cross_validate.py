@@ -86,11 +86,13 @@ def cross_validate(
 
             # Setup fit parameters
             fit_params_ifold = copy.copy(fit_params)
-            if is_gbdt_instance(models[0], ("lgbm", "xgb")):
+            if is_gbdt_instance(models[0], ("lgbm", "xgb", "cat")):
                 fit_params_ifold["eval_set"] = [(X_tr, y_tr), (X_val, y_val)]
 
-                if not is_gbdt_instance(models[0], "xgb"):
+                if is_gbdt_instance(models[0], "lgbm"):
                     fit_params_ifold["categorical_feature"] = dp.get_cat_feats()
+                elif is_gbdt_instance(models[0], "cat"):
+                    fit_params_ifold["cat_features"] = dp.get_cat_feats()
 
             models[ifold].fit(X_tr, y_tr, **fit_params_ifold)
 
@@ -110,7 +112,7 @@ def cross_validate(
                 holdout_scores.append(holdout_score)
 
             # Record feature importance
-            if is_gbdt_instance(models[0], ("lgbm", "xgb")):
+            if is_gbdt_instance(models[0], ("lgbm", "xgb", "cat")):
                 if isinstance(X_tr, pd.DataFrame):
                     feats = X_tr.columns
                 else:
@@ -241,7 +243,7 @@ def _get_feat_imp(
 
     if is_gbdt_instance(model, "lgbm"):
         feat_imp[f"importance_{imp_type}"] = model.booster_.feature_importance(imp_type)
-    elif is_gbdt_instance(model, "xgb"):
+    elif is_gbdt_instance(model, ("xgb", "cat")):
         feat_imp[f"importance_{imp_type}"] = model.feature_importances_
 
     return feat_imp

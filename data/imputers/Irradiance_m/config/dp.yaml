@@ -1,0 +1,36 @@
+dataset: null
+drop_outliers: top3
+fe:
+  add_module_meta: false
+  add_month: true
+  knn_meta_feats: {}
+  label_enc:
+  - Location
+  meta_feats: []
+  mine_irrad: []
+  mine_temp: []
+feats:
+- Date
+- Location
+- Capacity
+- Angle
+- StnPresMax
+- SunLightHr
+- SunRise
+- SunSet
+- Irradiance_i
+- TempMin
+- Temp_i
+- RHMin
+- COMedian
+holdout:
+  chrono: null
+  holdout_ratio: null
+  n_splits: 0
+  t_end: null
+  t_start: null
+  ts_col: null
+scale:
+  cols: []
+  n_quantiles: null
+  type: null

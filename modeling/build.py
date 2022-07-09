@@ -7,6 +7,7 @@ evaluate in different cv folds.
 """
 from typing import Any, Dict, List
 
+from catboost import CatBoostRegressor
 from lightgbm import LGBMRegressor
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import Ridge
@@ -28,10 +29,12 @@ def build_models(
     """
     if model_name == "lgbm":
         model = LGBMRegressor
-    elif model_name == "ridge":
-        model = Ridge
     elif model_name == "xgb":
         model = XGBRegressor
+    elif model_name == "cat":
+        model = CatBoostRegressor
+    elif model_name == "ridge":
+        model = Ridge
 
     models = [model(**model_params) for _ in range(n_models)]
 
