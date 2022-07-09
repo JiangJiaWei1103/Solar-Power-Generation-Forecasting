@@ -217,7 +217,7 @@ def _get_trial_params(model_name: str, trial: Trial) -> Dict[str, Any]:
             "lambda_l1": trial.suggest_loguniform("lambda_l1", 0.1, 2),
             "lambda_l2": trial.suggest_loguniform("lambda_l2", 0.1, 7),
             "cat_smooth": trial.suggest_int("cat_smooth", 1, 100),
-            "n_estimators": 2500,
+            "n_estimators": 10000,  # 2500 -> 10000
             "random_state": 42,
         }
     elif model_name == "xgb":

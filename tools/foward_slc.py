@@ -212,7 +212,7 @@ def main(args: Namespace) -> None:
         pre_excluded_feats=feats_to_drop,
         fs=foward_fs,
     )
-    foward_fs_wrapper.fit(data, y, fit_params)
+    foward_fs_wrapper.fit(data, data["Generation"], fit_params)  # y, fit_params)
 
     best_feats = foward_fs_wrapper.fs.best_feats_
     best_prf = foward_fs_wrapper.fs.best_prf_

@@ -1,6 +1,0 @@
-# Configuration file for model architecture, MLP
-# FC structure
-t_window: 7
-n_feats: 8
-h_dim: 64
-dropout: 0.2

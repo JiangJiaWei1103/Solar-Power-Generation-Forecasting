@@ -1,18 +1,18 @@
 # CatBoost model hyperparameters
 model_params:
-    learning_rate: 0.05
-    depth: 10
-    l2_leaf_reg: 1
-    bagging_temperature: 0.2
+    learning_rate: 0.01
+    depth: 6
+    l2_leaf_reg: 0.03920985406450164
+    bagging_temperature: 4.97037365640306
 
-    iterations: 2500
-    verbose_eval: 250
-    early_stopping_rounds: 250
+    iterations: 10000
+    verbose: 2500
+    early_stopping_rounds: 500
 
     eval_metric: RMSE
 
-    task_type: GPU
-    random_seed: 16888
+    task_type: CPU
+    random_state: 16888
 
 fit_params:
     use_best_model: True
